@@ -1,0 +1,65 @@
+name: Update README
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'problems/**/main.go'
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23.2'  # Adjust based on your Go version
+
+      - name: Generate Problem List
+        id: generate_list
+        run: |
+          echo "Generating problem list"
+          find problems -name "main.go" | awk -F/ '{print $2}' > problem_list.txt
+
+      - name: Update README.md
+        run: |
+          echo "Updating README.md"
+          problem_list=$(cat problem_list.txt)
+          
+          # Start building the README file content
+          echo "# LeetCode Solutions" > README.md
+          echo "" >> README.md
+          echo "This repository contains my solutions to various LeetCode problems implemented in Go." >> README.md
+          echo "" >> README.md
+          echo "## Table of Contents" >> README.md
+          echo "" >> README.md
+          
+          # Iterate through problem list and add links to each problem
+          echo "$problem_list" | while read problem; do
+            # Convert problem name to a markdown link format
+            problem_link=$(echo "$problem" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
+            echo "- [$problem](#${problem_link})" >> README.md
+          done
+          
+          # Add problem sections for each problem below the table of contents
+          echo "" >> README.md
+          echo "$problem_list" | while read problem; do
+            problem_link=$(echo "$problem" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
+            echo "## $problem" >> README.md
+            echo "" >> README.md
+            echo "[Solution code](problems/$problem/main.go)" >> README.md
+            echo "" >> README.md
+          done
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "Update README with solved problems"
+          git push
