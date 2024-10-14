@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'problems/**/main.go'
 
 jobs:
   update-readme:
